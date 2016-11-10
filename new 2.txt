@@ -1,0 +1,87 @@
+
+# DNS message Format
+#   DNS header (fixed length)
+#   Question entries
+#   Answer resource records
+#   Authority resource records
+#   Additional resource records
+
+DNSQueryMessageHeader :: SEQUENCE {
+	transactionId OCTET STRING (2)
+	flags :: BIT STRING {
+		requestResponse (0) # 0 if request, 1 if response
+		operationCode (1...4) # 0 is a query
+		authoritativeAnswer (5) # 1 if responder is authoritative
+		truncation (6) # 1 if the total num of responses exceeded the UDP datagram.
+		recursionDesired (7) # 1 if a recursive query, 0 for iterative queries. If sent by client, server returns list of servers the client can contact
+		recursionAvailable (8) # set to 1 by the server to indicate it can handle dns queries
+		reserved (9...11) # set to 0
+		returnCode (12...15) # 0 if successful, 0x3 on error DNE
+	}
+	questionRecordResourceCount INTEGER { Constraint -- 16b field -- }
+	answerResourceRecordCount INTEGER { Constraint -- 16b field -- }
+	answerRecordCount INTEGER { Constraint -- 16b field --}
+	
+}
+
+DNSMessage ::= SEQUENCE {
+	
+}
+
+#
+# dns query message header
+# transaction id: 16-bit copied by the responder in the message
+# flags: 16b: containing various service flags
+#   * request (0)/ response (1)
+#   * operation code: 4b: 0x0 is a query
+#   * authoritative answer: 1b: responder is authoritative
+#   * truncation: 1b: set to 1 if the total num or responses exceeded the UDP datagram. only the first 512B of the UDP reply are returned
+#   * recursion desired: 1b: 1 if a recursive query, 0 for iterative queries. If sent by client, server returns a list of servers the client can contact.
+#   * recursion available: 1b: set by a dns server to 1 to indicate that it can handle recursive queries.
+#   * reserved: 3b: set to 0
+#   * return code: 4b: 0 is a successful response; 0x3 is a name error, does not exist
+# question record resource count: 16b: number of entries in the question section of the DNS message
+# answer resource record count: 16b: number of entries in the answer section of the DNS message
+# authority resource record count: 16b: number of authority resource records in the DNS message
+# additional resource record count: 16b: number of additional resource records in the DNS message
+#
+# dns query question entries section
+# dns query question entry fields
+# question name: value:length pairs terminated by a final 0
+# question type
+#  0x01 - Host (A) record
+#   0x02 - Name server (NS) record
+#   0x05 - Alias (CNAME) record
+#   0x0C - Reverse-lookup (PTR) record
+#   0x0F - Mail Exchange (MX) record
+#   0x21 - Service (SRV) record
+#   0xFB - Incremental zone transfer (IXFR) record
+#   0xFC - Standard zone transfer (AXFR) record
+#   0xFF - All records
+# question class - normally set to 0x0001
+# 
+# dns resource records
+# 	resource record name: variable length field
+#	resource record type
+#	resource record class: 0x0001
+#	time-to-live (32b unsigned)
+#	resource data length: 2B	
+#
+# name query message format
+# transaction id: unique number
+# flags: standard query with recursion
+# question count: 1
+# question entry: set to the domain name queried
+# 
+# name query response format:
+# transaction id
+# flags: see above
+# question count: 1
+# qustion entry: set to the domain name queried and the record type to return
+#
+# reverse name query message format
+# dns client resolver constructs the domain in-addr.arpa domain based on the IP address 
+# that is queried.
+# a ptr resource record is queried rather than a host (A) record
+
+
